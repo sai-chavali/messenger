@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>Thread for {% if user != object.first %}{{ object.first }}{% else %}{{ object.second }}{% endif %}</h3>
+<ul id='chat-items'>
+{% for chat in object.chatmessage_set.all %}
+    {% if user != chat.user %}
+        <li class="text-left list-group-item">{{ chat.message }} via {{ chat.user }}</li>
+    {% else %}
+        <li class="text-right list-group-item">{{ chat.message }} via {{ chat.user }}</li>
+    {% endif %}
+    {% empty %}
+      <li class="text-right list-group-item">No messages yet!Start Conversation</li>
+{% endfor %}
+</ul>
+
+<form id='form' method='POST'> {% csrf_token %}
+{{form.as_p }}
+<input type='submit' class='btn btn-primary'/>
+</form>
+
+{% endblock %}
+
+{% block script %}
+
+<script>
+// websocket scripts
+var loc=window.location
+var wsStart='ws://'
+if (loc.protocol=='https:'){
+    wsStart='wss://'
+}
+endpoint=wsStart+loc.host+loc.pathname
+var socket=new WebSocket(endpoint)
+socket.onmessage=function(e){
+    console.log("message",e)
+}
+socket.onopen=function(e){
+    console.log("open",e)
+}
+socket.onerror=function(e){
+    console.log("error",e)
+}
+socket.onclose=function(e){
+    console.log("close",e)
+}
+</script>
+{% endblock %}
