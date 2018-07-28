@@ -7,3 +7,4 @@ class ComposeForm(forms.Form):
                 attrs={"class": "form-control"}
                 )
             )
+    image=forms.ImageField(required=False)

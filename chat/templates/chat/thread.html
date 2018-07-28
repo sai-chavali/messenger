@@ -2,19 +2,20 @@
 
 {% block content %}
 <h3>Thread for {% if user != object.first %}{{ object.first }}{% else %}{{ object.second }}{% endif %}</h3>
+<input type="hidden" id="me" value={{user}}/>
 <ul id='chat-items'>
 {% for chat in object.chatmessage_set.all %}
     {% if user != chat.user %}
-        <li class="text-left list-group-item">{{ chat.message }} via {{ chat.user }}</li>
+        <li class="text-left list-group-item">{{ chat.message }}</li>
     {% else %}
-        <li class="text-right list-group-item">{{ chat.message }} via {{ chat.user }}</li>
+        <li class="text-right list-group-item">{{ chat.message }}</li>
     {% endif %}
     {% empty %}
       <li class="text-right list-group-item">No messages yet!Start Conversation</li>
 {% endfor %}
 </ul>
 
-<form id='form' method='POST'> {% csrf_token %}
+<form id='form' method='POST' enctype="multipart/form-data"> {% csrf_token %}
 {{form.as_p }}
 <input type='submit' class='btn btn-primary'/>
 </form>
@@ -22,10 +23,15 @@
 {% endblock %}
 
 {% block script %}
-
 <script>
 // websocket scripts
 var loc=window.location
+var formData=$('#form')
+var msgInput=$('#id_message')
+var img=$('#id_image')
+var chatadder=$('#chat-items')
+var user=$('#me')
+var glyphi=$('#glyphi')
 var wsStart='ws://'
 if (loc.protocol=='https:'){
     wsStart='wss://'
@@ -33,10 +39,26 @@ if (loc.protocol=='https:'){
 endpoint=wsStart+loc.host+loc.pathname
 var socket=new WebSocket(endpoint)
 socket.onmessage=function(e){
-    console.log("message",e)
+    var chatdata=JSON.parse(e.data)
+    if(chatdata.username+'/'==user.val()){
+        chatadder.append("<li class='text-right list-group-item'>"+ chatdata.message + "</li>")
+    }
+    else{
+        glyphi.show();
+        chatadder.append("<li class='text-left list-group-item'>"+ chatdata.message+ "</li>")
+    }
 }
 socket.onopen=function(e){
-    console.log("open",e)
+    formData.submit(function(event){
+        event.preventDefault()
+        var msg=msgInput.val()
+        console.log(img)
+        var Data={
+            'message':msg
+        }
+        socket.send(JSON.stringify(Data))
+        formData[0].reset()
+    })
 }
 socket.onerror=function(e){
     console.log("error",e)

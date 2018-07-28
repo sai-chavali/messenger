@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-
+<h2>Persons that you recently visited</h2>
+{% for x in objects %}
+    {% if user == x.first%}
+        <a href="/messages/{{x.second}}">{{x.second}}</a></br>
+    {% else %}
+        <a href="/messages/{{x.first}}">{{x.first}}</a></br>
+    {% endif %}
+     {%empty%}
+        <h3>You are new to the website.Here the people oyu can try chating</h3>
+        {% for x in users %}
+            <a href="/messages/{{x.username}}">{{x.username}}</a></br>
+        {% endfor %}
+{% endfor %}
 {% endblock %}

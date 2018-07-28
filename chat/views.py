@@ -8,13 +8,19 @@ from django.views.generic import DetailView, ListView
 
 from .forms import ComposeForm
 from .models import Thread, ChatMessage
-
+from accounts.models import User
 
 class InboxView(LoginRequiredMixin, ListView):
     template_name = 'chat/inbox.html'
+    context_object_name = "objects" #fixed variable to return something to template
     def get_queryset(self):
         return Thread.objects.by_user(self.request.user)
 
+    def get_context_data(self,**kwargs):
+        context = super().get_context_data(**kwargs)
+        users=User.objects.values('username').exclude(username=self.request.user)[:5]
+        context['users']=users
+        return context
 
 class ThreadView(LoginRequiredMixin, FormMixin, DetailView):
     template_name = 'chat/thread.html'
@@ -22,7 +28,6 @@ class ThreadView(LoginRequiredMixin, FormMixin, DetailView):
 
     def get_success_url(self):
         route='./'+self.kwargs.get("username")
-        print(route)
         return route
 
     def get_queryset(self):
@@ -54,7 +59,8 @@ class ThreadView(LoginRequiredMixin, FormMixin, DetailView):
         thread = self.get_object()
         user = self.request.user
         message = form.cleaned_data.get("message")
-        ChatMessage.objects.create(user=user, thread=thread, message=message)
+        image=form.cleaned_data.get("image")
+        ChatMessage.objects.create(user=user,image=image,thread=thread, message=message)
         return super().form_valid(form)
 
 

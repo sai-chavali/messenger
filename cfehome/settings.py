@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'accounts',
     'bootstrap3',
     'channels',
+    'rest_framework',
 ]
 AUTH_USER_MODEL='accounts.User'
 MIDDLEWARE = [
@@ -57,6 +58,7 @@ ROOT_URLCONF = 'cfehome.urls'
 LOGIN_REDIRECT_URL = '/messages'
 LOGOUT_REDIRECT_URL = '/accounts/login'
 ASGI_APPLICATION = "cfehome.routing.application"
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -124,3 +126,23 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+MEDIA_URL='/media/'
+MEDIA_ROOT=os.path.join(BASE_DIR,'static')
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("localhost", 6379)],
+        },
+    },
+}
