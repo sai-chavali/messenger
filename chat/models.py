@@ -59,6 +59,5 @@ class ChatMessage(models.Model):
     thread      = models.ForeignKey(Thread, null=True, blank=True, on_delete=models.SET_NULL)
     user        = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='sender', on_delete=models.CASCADE)
     message     = models.TextField()
-    image = models.ImageField(default="default.png",
-                              blank=True, upload_to="static")
+    image = models.ImageField(blank=True, upload_to="static")
     timestamp   = models.DateTimeField(auto_now_add=True)

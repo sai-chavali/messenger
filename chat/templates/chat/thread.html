@@ -1,14 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    img{
+        width:120px;
+        height:120px;
+    }
+</style>
 <h3>Thread for {% if user != object.first %}{{ object.first }}{% else %}{{ object.second }}{% endif %}</h3>
 <input type="hidden" id="me" value={{user}}/>
 <ul id='chat-items'>
 {% for chat in object.chatmessage_set.all %}
     {% if user != chat.user %}
         <li class="text-left list-group-item">{{ chat.message }}</li>
+        {% if chat.image%}
+            <li class="text-left list-group-item"><img src='{{chat.image.url}}'/></li>
+        {%endif%}
     {% else %}
         <li class="text-right list-group-item">{{ chat.message }}</li>
+        {% if chat.image %}
+            <li class="text-right list-group-item"><img src='{{chat.image.url}}'/></li>
+        {%endif%}
     {% endif %}
     {% empty %}
       <li class="text-right list-group-item">No messages yet!Start Conversation</li>
@@ -28,9 +40,9 @@
 var loc=window.location
 var formData=$('#form')
 var msgInput=$('#id_message')
-var img=$('#id_image')
 var chatadder=$('#chat-items')
 var user=$('#me')
+var data=1;
 var glyphi=$('#glyphi')
 var wsStart='ws://'
 if (loc.protocol=='https:'){
@@ -42,19 +54,37 @@ socket.onmessage=function(e){
     var chatdata=JSON.parse(e.data)
     if(chatdata.username+'/'==user.val()){
         chatadder.append("<li class='text-right list-group-item'>"+ chatdata.message + "</li>")
+        if(chatdata.image!=1){
+            (chatdata.image).replace(' ','_')
+            console.log(chatdata.image)
+            chatadder.append("<li class='text-right list-group-item'>"+"<img src=../../../media/static/"+chatdata.image+"/>"+"</li>")
+        }
     }
     else{
-        glyphi.show();
+        //glyphi.show();
         chatadder.append("<li class='text-left list-group-item'>"+ chatdata.message+ "</li>")
+        if(chatdata.image!=1){
+            (chatdata.image).replace(' ','_')
+            console.log(chatdata.image)
+            chatadder.append("<li class='text-left list-group-item'>"+"<img src=../../../media/static/"+ chatdata.image +"/>"+"</li>")
+        }
     }
 }
+$('#id_image').on('change',function(e){
+    var file=e.originalEvent.target.files[0];
+    reader=new FileReader();
+    reader.onload=function(event){
+        data=event.target.result;
+    }
+    reader.readAsDataURL(file);
+})
 socket.onopen=function(e){
     formData.submit(function(event){
         event.preventDefault()
         var msg=msgInput.val()
-        console.log(img)
         var Data={
-            'message':msg
+            'message':msg,
+            'image':data
         }
         socket.send(JSON.stringify(Data))
         formData[0].reset()

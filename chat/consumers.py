@@ -1,5 +1,8 @@
 import asyncio
+import datetime
 import json
+import base64
+from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
 from channels.consumer import AsyncConsumer
 from channels.db import database_sync_to_async
@@ -28,21 +31,32 @@ class ChatConsumer(AsyncConsumer):
         self.chat_room=chat_room
 
     async def websocket_receive(self,event):
-        print("received",event)
         front_text=event.get('text',None)
+        data=None
+        imageid=1
+        ext=''
         if front_text is not None:
             loaded_dict_data=json.loads(front_text)
             msg=loaded_dict_data['message']
-            #img=loaded_dict_data['image']
+            if loaded_dict_data['image']!=1:
+                imageid=str(datetime.datetime.now())
+                img=loaded_dict_data['image']
+                fmat,imgstr=img.split(';base64,')
+                ext=fmat.split('/')[-1]
+                data=ContentFile(base64.b64decode(imgstr),name=f"{imageid}"+'.'+ext)
+                imageid += '.' + ext
+                imageid =imageid.replace(' ','_')
+                imageid=imageid.replace(':','')
             user=self.scope['user']
             username='guest'
             if user.is_authenticated:
                 username=user.username
             resp={
                 'message':msg,
+                'image':imageid,
                 'username':username
             }
-            await self.create_new_chat_msg(msg)
+            await self.create_new_chat_msg(msg,data)
             #broadcasts the message event to be sent
             await self.channel_layer.group_send(
                 self.chat_room,
@@ -67,7 +81,7 @@ class ChatConsumer(AsyncConsumer):
         return Thread.objects.get_or_new(user,other_username)[0]
 
     @database_sync_to_async
-    def create_new_chat_msg(self,msg):
+    def create_new_chat_msg(self,msg,img=None):
         thread_obj=self.thread_obj
         me=self.scope['user']
-        return ChatMessage.objects.create(thread=thread_obj,user=me,message=msg)
+        return ChatMessage.objects.create(thread=thread_obj,user=me,message=msg,image=img)
